@@ -25,12 +25,12 @@
       "init": {"menu_options": {"add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}},
       "add_device": {"title": "Add brightness device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
       "edit_device": {"title": "Select device", "data": {"device_id": "Device"}},
-      "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot"}},
+      "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
       "edit_channels": {"title": "Channel names"},
       "delete_device": {"title": "Select device to delete", "data": {"device_id": "Device"}},
       "confirm_delete": {"title": "Confirm deletion", "data": {"confirm": "Delete this device"}}
     },
-    "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required"},
+    "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required", "dmx_range": "The start address and channel count must fit within DMX slots 1–512."},
     "abort": {"cannot_connect": "Cannot connect to gateway", "delete_cancelled": "Deletion cancelled"}
   },
   "entity": {"switch": {"blackout": {"name": "Blackout"}}}

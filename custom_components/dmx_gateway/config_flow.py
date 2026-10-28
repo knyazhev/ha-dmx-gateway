@@ -127,6 +127,11 @@ def _api_config(config: GatewayConfig) -> dict[str, Any]:
     }
 
 
+def _valid_dmx_range(start_address: int, channel_count: int) -> bool:
+    """Return whether a device fits entirely in the 512-slot DMX universe."""
+    return 1 <= start_address <= 512 and 1 <= channel_count <= 512 and start_address + channel_count - 1 <= 512
+
+
 class DmxGatewayOptionsFlow(OptionsFlow):
     """Thin standard-UI editor over authoritative Gateway runtime config."""
 
@@ -175,9 +180,11 @@ class DmxGatewayOptionsFlow(OptionsFlow):
             self._pending_device = {"device_id": f"device-{uuid4().hex}", "name": user_input["name"].strip(), "start_address": user_input["start_address"], "channel_count": user_input["channel_count"]}
             if not self._pending_device["name"]:
                 errors["name"] = "required"
+            elif not _valid_dmx_range(self._pending_device["start_address"], self._pending_device["channel_count"]):
+                errors["base"] = "dmx_range"
             else:
                 return await self.async_step_edit_channels()
-        schema = vol.Schema({vol.Required("name"): str, vol.Required("start_address", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=512)), vol.Required("channel_count", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=32))})
+        schema = vol.Schema({vol.Required("name"): str, vol.Required("start_address", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=512)), vol.Required("channel_count", default=1): vol.All(vol.Coerce(int), vol.Range(min=1, max=512))})
         return self.async_show_form(step_id="add_device", data_schema=schema, errors=errors)
 
     async def async_step_edit_device(self, user_input: dict[str, Any] | None = None):
@@ -189,11 +196,15 @@ class DmxGatewayOptionsFlow(OptionsFlow):
                 return self.async_show_form(step_id="edit_device", data_schema=vol.Schema({vol.Required("device_id"): vol.In({d.device_id: d.name for d in config.devices})}))
         device = next(d for d in config.devices if d.device_id == self._selected_device_id)
         if user_input is not None and "name" in user_input:
-            self._pending_device = {"device_id": device.device_id, "name": user_input["name"].strip(), "start_address": user_input["start_address"], "channel_count": len(device.channels)}
+            self._pending_device = {"device_id": device.device_id, "name": user_input["name"].strip(), "start_address": user_input["start_address"], "channel_count": user_input["channel_count"]}
             if not self._pending_device["name"]:
-                return self.async_show_form(step_id="edit_device_details", data_schema=vol.Schema({vol.Required("name", default=device.name): str, vol.Required("start_address", default=device.start_address): vol.All(vol.Coerce(int), vol.Range(min=1, max=512))}), errors={"name": "required"})
-            return await self.async_step_edit_channels()
-        return self.async_show_form(step_id="edit_device_details", data_schema=vol.Schema({vol.Required("name", default=device.name): str, vol.Required("start_address", default=device.start_address): vol.All(vol.Coerce(int), vol.Range(min=1, max=512))}))
+                errors["name"] = "required"
+            elif not _valid_dmx_range(self._pending_device["start_address"], self._pending_device["channel_count"]):
+                errors["base"] = "dmx_range"
+            else:
+                return await self.async_step_edit_channels()
+            return self.async_show_form(step_id="edit_device_details", data_schema=vol.Schema({vol.Required("name", default=device.name): str, vol.Required("start_address", default=device.start_address): vol.All(vol.Coerce(int), vol.Range(min=1, max=512)), vol.Required("channel_count", default=len(device.channels)): vol.All(vol.Coerce(int), vol.Range(min=1, max=512))}), errors=errors)
+        return self.async_show_form(step_id="edit_device_details", data_schema=vol.Schema({vol.Required("name", default=device.name): str, vol.Required("start_address", default=device.start_address): vol.All(vol.Coerce(int), vol.Range(min=1, max=512)), vol.Required("channel_count", default=len(device.channels)): vol.All(vol.Coerce(int), vol.Range(min=1, max=512))}))
 
     async_step_edit_device_details = async_step_edit_device
 
@@ -204,7 +215,7 @@ class DmxGatewayOptionsFlow(OptionsFlow):
         count = self._pending_device["channel_count"]
         schema_fields: dict[Any, Any] = {}
         for index in range(count):
-            default = existing.channels[index].name if existing else f"Channel {index + 1}"
+            default = existing.channels[index].name if existing and index < len(existing.channels) else f"Channel {index + 1}"
             schema_fields[vol.Required(f"channel_{index}_name", default=default)] = str
         if user_input is not None:
             names = [user_input[f"channel_{index}_name"].strip() for index in range(count)]
@@ -212,7 +223,7 @@ class DmxGatewayOptionsFlow(OptionsFlow):
                 return self.async_show_form(step_id="edit_channels", data_schema=vol.Schema(schema_fields), errors={"base": "required"})
             channels = []
             for index, name in enumerate(names):
-                channel_id = existing.channels[index].channel_id if existing else f"{self._pending_device['device_id']}-ch{index + 1}"
+                channel_id = existing.channels[index].channel_id if existing and index < len(existing.channels) else f"{self._pending_device['device_id']}-ch{index + 1}"
                 channels.append({"channel_id": channel_id, "name": name, "type": "brightness", "offset": index})
             candidate = _api_config(config)
             item = {"device_id": self._pending_device["device_id"], "name": self._pending_device["name"], "start_address": self._pending_device["start_address"], "channels": channels}
