@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {"title": "Connect to DMX Gateway", "description": "Enter the local Product API address and development credential.", "data": {"host": "Host or IP address", "port": "Port", "token": "Development credential"}},
+      "reconfigure": {"title": "Reconfigure DMX Gateway", "data": {"host": "Host or IP address", "port": "Port", "token": "Development credential"}},
+      "reauth_confirm": {"title": "Reauthenticate DMX Gateway", "description": "The gateway rejected the saved development credential.", "data": {"token": "Development credential"}}
+    },
+    "error": {"cannot_connect": "Cannot connect to gateway", "timeout": "Gateway timed out", "invalid_auth": "Invalid development credential", "unsupported_api": "Unsupported gateway API version"},
+    "abort": {"already_configured": "This gateway is already configured", "reauth_successful": "Reauthentication successful", "reconfigure_successful": "Reconfiguration successful"}
+  },
+  "options": {"step": {"init": {"menu_options": {"add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}}, "add_device": {"title": "Add brightness device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}}, "edit_device": {"title": "Select device", "data": {"device_id": "Device"}}, "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot"}}, "edit_channels": {"title": "Channel names"}, "delete_device": {"title": "Select device to delete", "data": {"device_id": "Device"}}, "confirm_delete": {"title": "Confirm deletion", "data": {"confirm": "Delete this device"}}}, "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required"}, "abort": {"cannot_connect": "Cannot connect to gateway", "delete_cancelled": "Deletion cancelled"}},
+  "entity": {"switch": {"blackout": {"name": "Blackout"}}}
+}
