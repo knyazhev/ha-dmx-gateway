@@ -3,7 +3,7 @@
   "name": "DMX Gateway",
   "codeowners": [],
   "config_flow": true,
-  "documentation": "https://github.com/knyazhev/esphome-dmx-gateway/tree/main/ha",
+  "documentation": "https://github.com/knyazhev/ha-dmx-gateway",
   "integration_type": "hub",
   "iot_class": "local_poll",
   "version": "0.1.0",
