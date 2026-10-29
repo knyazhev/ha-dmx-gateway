@@ -15,7 +15,7 @@ from .coordinator import GatewayCoordinator
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     coordinator = entry.runtime_data.coordinator
-    async_add_entities([DmxBlackoutSwitch(coordinator)] + [DmxDefaultFadeSwitch(coordinator, device.device_id, channel.channel_id, channel.name) for device in coordinator.data.config.devices for channel in device.channels if channel.type == "brightness"])
+    async_add_entities([DmxBlackoutSwitch(coordinator)])
 
 
 class DmxBlackoutSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):

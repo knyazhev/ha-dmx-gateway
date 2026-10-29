@@ -99,8 +99,6 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
         # duration is the time for each 10 percentage-point change.
         if ATTR_TRANSITION in kwargs:
             return max(0, min(600000, round(float(kwargs[ATTR_TRANSITION]) * 1000)))
-        if not self.coordinator.entry.options.get(fade_enabled_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_ENABLED)):
-            return 0
         duration = float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))
         if duration <= 0:
             return 0

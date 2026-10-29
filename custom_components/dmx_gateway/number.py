@@ -43,7 +43,7 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
         self._channel_id = channel_id
         self._device_id = device_id
         self._attr_unique_id = f"{coordinator.info.gateway_id}_{channel_id}_default_fade_duration"
-        self._attr_name = f"{channel_name} — время увеличения яркости с 0 до 100 %"
+        self._attr_name = "Время увеличения яркости с 0 до 100 %"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -53,7 +53,7 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
 
     @property
     def native_value(self) -> float:
-        return float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))
+        return max(1.0, min(10.0, float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))))
 
     async def async_set_native_value(self, value: float) -> None:
         options = dict(self.coordinator.entry.options)
