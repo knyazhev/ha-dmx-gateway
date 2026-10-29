@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DmxGatewayConfigEntry
-from .const import DOMAIN
+from .const import CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE, DOMAIN
 from .coordinator import GatewayCoordinator
 from .models import Channel, RuntimeDevice
 
@@ -73,10 +73,10 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         brightness = kwargs.get(ATTR_BRIGHTNESS, 255) / 255
-        await self.coordinator.async_set_channel(self._channel_id, brightness, self._transition_ms(kwargs))
+        await self.coordinator.async_set_channel(self._channel_id, brightness, self._transition_ms(kwargs, brightness))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.async_set_channel(self._channel_id, 0.0, self._transition_ms(kwargs))
+        await self.coordinator.async_set_channel(self._channel_id, 0.0, self._transition_ms(kwargs, 0.0))
 
     @property
     def _brightness(self) -> float:
@@ -90,6 +90,14 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
         return next((channel for channel in device.channels if channel.channel_id == self._channel_id), None) if device else None
 
     @staticmethod
-    def _transition_ms(kwargs: dict[str, Any]) -> int:
-        transition = kwargs.get(ATTR_TRANSITION, 0)
-        return max(0, min(600000, round(float(transition) * 1000)))
+    def _transition_ms(self, kwargs: dict[str, Any], target: float) -> int:
+        # An explicit HA transition always wins, including transition=0 to
+        # request an immediate change. Otherwise use the per-entry default
+        # rate, expressed as percentage points per second.
+        if ATTR_TRANSITION in kwargs:
+            return max(0, min(600000, round(float(kwargs[ATTR_TRANSITION]) * 1000)))
+        rate = float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE))
+        if rate <= 0:
+            return 0
+        delta = abs(target - self._brightness)
+        return max(0, min(600000, round(delta * 100.0 / rate * 1000.0)))

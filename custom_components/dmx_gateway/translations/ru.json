@@ -10,7 +10,8 @@
   },
   "options": {
     "step": {
-      "init": {"menu_options": {"add_device": "Добавить устройство", "edit_device": "Изменить устройство", "delete_device": "Удалить устройство"}},
+      "init": {"menu_options": {"fade_settings": "Настройка плавности", "add_device": "Добавить устройство", "edit_device": "Изменить устройство", "delete_device": "Удалить устройство"}},
+      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_rate": "Скорость плавности (%/с)"}},
       "add_device": {"title": "Добавление DMX-устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
       "edit_device": {"title": "Выбор устройства", "data": {"device_id": "Устройство"}},
       "edit_device_details": {"title": "Изменение устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},

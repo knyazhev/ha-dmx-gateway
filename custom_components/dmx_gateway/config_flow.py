@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import DmxGatewayApiClient, GatewayApiCompatibilityError, GatewayApiError, GatewayAuthenticationError, GatewayConnectionError, GatewayRevisionConflictError, GatewayTimeoutError
-from .const import CONF_PORT, CONF_TOKEN, DEFAULT_PORT, DOMAIN
+from .const import CONF_DEFAULT_FADE_RATE, CONF_PORT, CONF_TOKEN, DEFAULT_FADE_RATE, DEFAULT_PORT, DOMAIN
 from .models import GatewayConfig, GatewayInfo
 
 
@@ -170,9 +170,20 @@ class DmxGatewayOptionsFlow(OptionsFlow):
             config = await self._load()
         except GatewayConnectionError:
             return self.async_abort(reason="cannot_connect")
+        menu_options = ["fade_settings"]
         if not config.devices:
-            return self.async_show_menu(step_id="init", menu_options=["add_device"])
-        return self.async_show_menu(step_id="init", menu_options=["add_device", "edit_device", "delete_device"])
+            menu_options.append("add_device")
+        else:
+            menu_options.extend(["add_device", "edit_device", "delete_device"])
+        return self.async_show_menu(step_id="init", menu_options=menu_options)
+
+    async def async_step_fade_settings(self, user_input: dict[str, Any] | None = None):
+        """Configure the default fade rate used when HA omits transition."""
+        if user_input is not None:
+            return self.async_create_entry(data={CONF_DEFAULT_FADE_RATE: float(user_input[CONF_DEFAULT_FADE_RATE])})
+        current = self.config_entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE)
+        schema = vol.Schema({vol.Required(CONF_DEFAULT_FADE_RATE, default=current): vol.All(vol.Coerce(float), vol.Range(min=0, max=1000))})
+        return self.async_show_form(step_id="fade_settings", data_schema=schema)
 
     async def async_step_add_device(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}

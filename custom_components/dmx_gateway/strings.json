@@ -22,7 +22,8 @@
   },
   "options": {
     "step": {
-      "init": {"menu_options": {"add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}},
+      "init": {"menu_options": {"fade_settings": "Fade settings", "add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}},
+      "fade_settings": {"title": "Default fade", "description": "Used when a light command does not include an explicit transition.", "data": {"default_fade_rate": "Default fade rate (%/s)"}},
       "add_device": {"title": "Add brightness device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
       "edit_device": {"title": "Select device", "data": {"device_id": "Device"}},
       "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
