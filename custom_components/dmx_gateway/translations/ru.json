@@ -1,11 +1,11 @@
 {
   "config": {
     "step": {
-      "user": {"title": "Подключение DMX Gateway", "description": "Укажите адрес локального API шлюза и credential.", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Credential"}},
-      "reconfigure": {"title": "Изменение DMX Gateway", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Credential"}},
-      "reauth_confirm": {"title": "Повторная аутентификация DMX Gateway", "data": {"token": "Credential"}}
+      "user": {"title": "Подключение DMX Gateway", "description": "Укажите адрес локального API шлюза и API-токен.", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "API-токен"}},
+      "reconfigure": {"title": "Изменение DMX Gateway", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "API-токен"}},
+      "reauth_confirm": {"title": "Повторная аутентификация DMX Gateway", "data": {"token": "API-токен"}}
     },
-    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "timeout": "Превышено время ожидания", "invalid_auth": "Неверный credential", "unsupported_api": "Неподдерживаемая версия API"},
+    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "timeout": "Превышено время ожидания", "invalid_auth": "Неверный API-токен", "unsupported_api": "Неподдерживаемая версия API"},
     "abort": {"already_configured": "Этот шлюз уже настроен", "reauth_successful": "Аутентификация успешна", "reconfigure_successful": "Перенастройка успешна"}
   },
   "options": {

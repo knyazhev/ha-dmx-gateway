@@ -4,20 +4,20 @@
     "step": {
       "user": {
         "title": "Connect to DMX Gateway",
-        "description": "Enter the local Product API address and development credential.",
-        "data": {"host": "Host or IP address", "port": "Port", "token": "Development credential"}
+        "description": "Enter the local Product API address and API token.",
+        "data": {"host": "Host or IP address", "port": "Port", "token": "API token"}
       },
       "reconfigure": {
         "title": "Reconfigure DMX Gateway",
-        "data": {"host": "Host or IP address", "port": "Port", "token": "Development credential"}
+        "data": {"host": "Host or IP address", "port": "Port", "token": "API token"}
       },
       "reauth_confirm": {
         "title": "Reauthenticate DMX Gateway",
-        "description": "The gateway rejected the saved development credential.",
-        "data": {"token": "Development credential"}
+        "description": "The gateway rejected the saved API token.",
+        "data": {"token": "API token"}
       }
     },
-    "error": {"cannot_connect": "Cannot connect to gateway", "timeout": "Gateway timed out", "invalid_auth": "Invalid development credential", "unsupported_api": "Unsupported gateway API version"},
+    "error": {"cannot_connect": "Cannot connect to gateway", "timeout": "Gateway timed out", "invalid_auth": "Invalid API token", "unsupported_api": "Unsupported gateway API version"},
     "abort": {"already_configured": "This gateway is already configured", "reauth_successful": "Reauthentication successful", "reconfigure_successful": "Reconfiguration successful"}
   },
   "options": {
