@@ -17,7 +17,7 @@ from .api import DmxGatewayApiClient, GatewayApiCompatibilityError, GatewayAuthe
 from .const import CONFIG_REFRESH_INTERVAL, CONF_HOST, CONF_PORT, CONF_TOKEN, DOMAIN, MANUFACTURER
 from .coordinator import GatewayCoordinator
 
-PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH, Platform.NUMBER, Platform.SELECT]
 
 
 @dataclass(slots=True)

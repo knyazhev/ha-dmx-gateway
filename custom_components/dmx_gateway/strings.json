@@ -34,5 +34,5 @@
     "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required", "dmx_range": "The start address and channel count must fit within DMX slots 1–512."},
     "abort": {"cannot_connect": "Cannot connect to gateway", "delete_cancelled": "Deletion cancelled"}
   },
-  "entity": {"switch": {"blackout": {"name": "Blackout"}}}
+  "entity": {"switch": {"blackout": {"name": "Blackout"}, "default_fade": {"name": "Default fade"}}, "number": {"default_fade_rate": {"name": "Default fade rate"}}, "select": {"startup_behavior": {"name": "After restart", "state": {"restore": "Restore last state", "off": "Always off"}}}}
 }

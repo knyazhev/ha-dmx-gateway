@@ -93,6 +93,22 @@ class DmxGatewayApiClient:
         except GatewayResponseError as err:
             raise GatewayInvalidResponseError(str(err)) from err
 
+    async def async_get_startup_behavior(self) -> str:
+        payload = await self._async_request("GET", "/settings")
+        behavior = payload.get("startup_behavior")
+        if behavior not in {"restore", "off"}:
+            raise GatewayInvalidResponseError("invalid startup behavior")
+        return behavior
+
+    async def async_set_startup_behavior(self, behavior: str) -> str:
+        if behavior not in {"restore", "off"}:
+            raise GatewayUnsupportedOperationError("invalid startup behavior")
+        payload = await self._async_request("PUT", "/settings", {"startup_behavior": behavior})
+        returned = payload.get("startup_behavior")
+        if returned not in {"restore", "off"}:
+            raise GatewayInvalidResponseError("invalid startup behavior response")
+        return returned
+
     async def async_get_state(self) -> GatewayState:
         try:
             return GatewayState.from_api(await self._async_request("GET", "/state"))

@@ -24,6 +24,7 @@ class GatewaySnapshot:
     state: GatewayState
     # Product API currently exposes commanded writes, not fixture feedback.
     commanded_brightness: dict[str, float]
+    startup_behavior: str
 
 
 class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
@@ -63,6 +64,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 if state.config_revision != config.config_revision:
                     state = await self.client.async_get_state()
             diagnostics = await self.client.async_get_diagnostics()
+            startup_behavior = await self.client.async_get_startup_behavior()
         except GatewayAuthenticationError:
             raise
         except GatewayApiError as err:
@@ -74,7 +76,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
         # topology update raced the two GETs, retain only channels from config.
         commanded = {channel_id: logical.brightness for channel_id, logical in state.channels.items() if channel_id in valid_channels}
         diagnostics = replace(diagnostics, blackout=state.blackout)
-        snapshot = GatewaySnapshot(info=info, config=config, diagnostics=diagnostics, state=state, commanded_brightness=commanded)
+        snapshot = GatewaySnapshot(info=info, config=config, diagnostics=diagnostics, state=state, commanded_brightness=commanded, startup_behavior=startup_behavior)
         self._sync_runtime_device_names(config)
         if old and self._topology(old.config) != self._topology(config):
             self._schedule_reload(old.config, config)
@@ -98,6 +100,11 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
             self.async_set_updated_data(
                 replace(self.data, diagnostics=replace(self.data.diagnostics, blackout=returned), state=replace(self.data.state, blackout=returned))
             )
+
+    async def async_set_startup_behavior(self, behavior: str) -> None:
+        returned = await self.client.async_set_startup_behavior(behavior)
+        if self.data:
+            self.async_set_updated_data(replace(self.data, startup_behavior=returned))
 
     @staticmethod
     def _topology(config: GatewayConfig) -> frozenset[tuple[str, str]]:
