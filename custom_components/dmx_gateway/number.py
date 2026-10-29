@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DmxGatewayConfigEntry
-from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION, DOMAIN, MANUFACTURER
+from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION, DEFAULT_FADE_ENABLED, DOMAIN, MANUFACTURER
 from .coordinator import GatewayCoordinator
 
 
@@ -26,7 +26,7 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
     _attr_native_max_value = 10
     _attr_native_step = 1
     _attr_mode = NumberMode.SLIDER
-    _attr_native_unit_of_measurement = "s"
+    _attr_native_unit_of_measurement = "s/10%"
 
     def __init__(self, coordinator: GatewayCoordinator) -> None:
         super().__init__(coordinator)
