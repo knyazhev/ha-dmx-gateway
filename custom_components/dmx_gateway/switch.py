@@ -54,7 +54,6 @@ class DmxDefaultFadeSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "default_fade"
-    _attr_entity_category = "config"
 
     def __init__(self, coordinator: GatewayCoordinator) -> None:
         super().__init__(coordinator)

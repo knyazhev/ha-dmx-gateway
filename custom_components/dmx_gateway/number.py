@@ -22,7 +22,6 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
 
     _attr_has_entity_name = True
     _attr_translation_key = "default_fade_rate"
-    _attr_entity_category = "config"
     _attr_native_min_value = 0
     _attr_native_max_value = 1000
     _attr_native_step = 1

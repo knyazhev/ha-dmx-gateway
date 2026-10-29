@@ -22,7 +22,6 @@ class DmxStartupBehaviorSelect(CoordinatorEntity[GatewayCoordinator], SelectEnti
 
     _attr_has_entity_name = True
     _attr_translation_key = "startup_behavior"
-    _attr_entity_category = "config"
     _attr_options = ["restore", "off"]
 
     def __init__(self, coordinator: GatewayCoordinator) -> None:
