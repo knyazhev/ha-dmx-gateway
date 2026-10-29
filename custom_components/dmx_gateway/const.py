@@ -12,7 +12,9 @@ CONF_PORT: Final = "port"
 CONF_TOKEN: Final = "token"
 DEFAULT_PORT: Final = 8080
 CONF_DEFAULT_FADE_RATE: Final = "default_fade_rate"
+CONF_DEFAULT_FADE_ENABLED: Final = "default_fade_enabled"
 DEFAULT_FADE_RATE: Final = 10.0
+DEFAULT_FADE_ENABLED: Final = True
 
 API_VERSION: Final = "v1"
 CONFIG_REFRESH_INTERVAL: Final = 60

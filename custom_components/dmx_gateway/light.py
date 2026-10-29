@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DmxGatewayConfigEntry
-from .const import CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE, DOMAIN
+from .const import CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_ENABLED, DEFAULT_FADE_RATE, DOMAIN
 from .coordinator import GatewayCoordinator
 from .models import Channel, RuntimeDevice
 
@@ -96,6 +96,8 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
         # rate, expressed as percentage points per second.
         if ATTR_TRANSITION in kwargs:
             return max(0, min(600000, round(float(kwargs[ATTR_TRANSITION]) * 1000)))
+        if not self.coordinator.entry.options.get(CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_ENABLED):
+            return 0
         rate = float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE))
         if rate <= 0:
             return 0
