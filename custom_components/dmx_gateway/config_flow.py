@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, OptionsFlow
+from homeassistant.config_entries import ConfigFlow, OptionsFlowWithReload
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -132,7 +132,7 @@ def _valid_dmx_range(start_address: int, channel_count: int) -> bool:
     return 1 <= start_address <= 512 and 1 <= channel_count <= 512 and start_address + channel_count - 1 <= 512
 
 
-class DmxGatewayOptionsFlow(OptionsFlow):
+class DmxGatewayOptionsFlow(OptionsFlowWithReload):
     """Thin standard-UI editor over authoritative Gateway runtime config."""
 
     def __init__(self) -> None:
