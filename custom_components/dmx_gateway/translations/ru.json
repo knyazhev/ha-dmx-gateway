@@ -11,7 +11,7 @@
   "options": {
     "step": {
       "init": {"menu_options": {"fade_settings": "Настройка плавности", "add_device": "Добавить устройство", "edit_device": "Изменить устройство", "delete_device": "Удалить устройство"}},
-      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_enabled": "Включить плавность по умолчанию", "default_fade_rate": "Скорость плавности (%/с)"}},
+      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_enabled": "Включить плавность по умолчанию", "default_fade_duration": "Время полного включения (секунды)"}},
       "add_device": {"title": "Добавление DMX-устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
       "edit_device": {"title": "Выбор устройства", "data": {"device_id": "Устройство"}},
       "edit_device_details": {"title": "Изменение устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
@@ -22,5 +22,5 @@
     "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "invalid_config": "Шлюз отклонил конфигурацию", "revision_conflict": "Конфигурация изменилась. Откройте редактор заново.", "required": "Требуется имя", "dmx_range": "Начальный адрес и число каналов должны помещаться в диапазон DMX 1–512."},
     "abort": {"cannot_connect": "Не удалось подключиться к шлюзу", "delete_cancelled": "Удаление отменено"}
   },
-  "entity": {"switch": {"blackout": {"name": "Затемнение"}, "default_fade": {"name": "Плавность по умолчанию"}}, "number": {"default_fade_rate": {"name": "Скорость плавности"}}, "select": {"startup_behavior": {"name": "После перезапуска", "state": {"restore": "Восстановить последнее состояние", "off": "Всегда выключать"}}}}
+  "entity": {"switch": {"blackout": {"name": "Затемнение"}, "default_fade": {"name": "Плавность по умолчанию"}}, "number": {"default_fade_duration": {"name": "Время полного включения"}}, "select": {"startup_behavior": {"name": "После перезапуска", "state": {"on": "Всегда включать", "off": "Всегда выключать", "restore": "Восстанавливать последнее состояние"}}}}
 }

@@ -23,7 +23,7 @@
   "options": {
     "step": {
       "init": {"menu_options": {"fade_settings": "Fade settings", "add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}},
-      "fade_settings": {"title": "Default fade", "description": "Used when a light command does not include an explicit transition.", "data": {"default_fade_enabled": "Enable default fade", "default_fade_rate": "Default fade rate (%/s)"}},
+      "fade_settings": {"title": "Default fade", "description": "Used when a light command does not include an explicit transition.", "data": {"default_fade_enabled": "Enable default fade", "default_fade_duration": "Full-range fade duration (seconds)"}},
       "add_device": {"title": "Add brightness device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
       "edit_device": {"title": "Select device", "data": {"device_id": "Device"}},
       "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
@@ -34,5 +34,5 @@
     "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required", "dmx_range": "The start address and channel count must fit within DMX slots 1–512."},
     "abort": {"cannot_connect": "Cannot connect to gateway", "delete_cancelled": "Deletion cancelled"}
   },
-  "entity": {"switch": {"blackout": {"name": "Blackout"}, "default_fade": {"name": "Default fade"}}, "number": {"default_fade_rate": {"name": "Default fade rate"}}, "select": {"startup_behavior": {"name": "After restart", "state": {"restore": "Restore last state", "off": "Always off"}}}}
+  "entity": {"switch": {"blackout": {"name": "Blackout"}, "default_fade": {"name": "Default fade"}}, "number": {"default_fade_duration": {"name": "Full-range fade duration"}}, "select": {"startup_behavior": {"name": "After restart", "state": {"on": "Always on", "off": "Always off", "restore": "Restore last state"}}}}
 }

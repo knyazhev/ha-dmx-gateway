@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DmxGatewayConfigEntry
-from .const import CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_ENABLED, DEFAULT_FADE_RATE, DOMAIN, MANUFACTURER
+from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION, DOMAIN, MANUFACTURER
 from .coordinator import GatewayCoordinator
 
 
@@ -21,16 +21,16 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
     """Default automatic fade speed in percentage points per second."""
 
     _attr_has_entity_name = True
-    _attr_translation_key = "default_fade_rate"
-    _attr_native_min_value = 0
-    _attr_native_max_value = 1000
+    _attr_translation_key = "default_fade_duration"
+    _attr_native_min_value = 1
+    _attr_native_max_value = 10
     _attr_native_step = 1
     _attr_mode = NumberMode.SLIDER
-    _attr_native_unit_of_measurement = "%/s"
+    _attr_native_unit_of_measurement = "s"
 
     def __init__(self, coordinator: GatewayCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.info.gateway_id}_default_fade_rate"
+        self._attr_unique_id = f"{coordinator.info.gateway_id}_default_fade_duration"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -45,11 +45,11 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
 
     @property
     def native_value(self) -> float:
-        return float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE))
+        return float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION)))
 
     async def async_set_native_value(self, value: float) -> None:
         options = dict(self.coordinator.entry.options)
-        options[CONF_DEFAULT_FADE_RATE] = float(value)
+        options[CONF_DEFAULT_FADE_DURATION] = float(value)
         options.setdefault(CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_ENABLED)
         self.hass.config_entries.async_update_entry(self.coordinator.entry, options=options)
         self.async_write_ha_state()

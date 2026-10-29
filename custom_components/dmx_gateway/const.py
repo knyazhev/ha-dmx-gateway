@@ -11,8 +11,11 @@ CONF_HOST: Final = "host"
 CONF_PORT: Final = "port"
 CONF_TOKEN: Final = "token"
 DEFAULT_PORT: Final = 8080
+CONF_DEFAULT_FADE_DURATION: Final = "default_fade_duration"
+# Backward-compatible alias for existing options entries.
 CONF_DEFAULT_FADE_RATE: Final = "default_fade_rate"
 CONF_DEFAULT_FADE_ENABLED: Final = "default_fade_enabled"
+DEFAULT_FADE_DURATION: Final = 10.0
 DEFAULT_FADE_RATE: Final = 10.0
 DEFAULT_FADE_ENABLED: Final = True
 
