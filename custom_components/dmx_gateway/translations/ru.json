@@ -22,5 +22,5 @@
     "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "invalid_config": "Шлюз отклонил конфигурацию", "revision_conflict": "Конфигурация изменилась. Откройте редактор заново.", "required": "Требуется имя", "dmx_range": "Начальный адрес и число каналов должны помещаться в диапазон DMX 1–512."},
     "abort": {"cannot_connect": "Не удалось подключиться к шлюзу", "delete_cancelled": "Удаление отменено"}
   },
-  "entity": {"switch": {"blackout": {"name": "Затемнение"}, "default_fade": {"name": "Плавность по умолчанию"}}, "number": {"default_fade_duration": {"name": "Скорость диммирования"}}, "select": {"startup_behavior": {"name": "После повторного включения", "state": {"on": "Все каналы включены", "off": "Все каналы выключены", "restore": "Восстановить последнее состояние"}}}}
+  "entity": {"switch": {"blackout": {"name": "Затемнение"}, "default_fade": {"name": "Включать плавно"}}, "number": {"default_fade_duration": {"name": "Время увеличения яркости с 0 до 100 %"}}, "select": {"startup_behavior": {"name": "Действие после подачи электропитания", "state": {"on": "Включен", "off": "Выключен", "restore": "Состояние при отключении"}}}}
 }

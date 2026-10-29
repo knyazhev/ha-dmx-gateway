@@ -43,7 +43,7 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
         self._channel_id = channel_id
         self._device_id = device_id
         self._attr_unique_id = f"{coordinator.info.gateway_id}_{channel_id}_default_fade_duration"
-        self._attr_name = f"{channel_name} — скорость диммирования"
+        self._attr_name = f"{channel_name} — время увеличения яркости с 0 до 100 %"
 
     @property
     def device_info(self) -> DeviceInfo:

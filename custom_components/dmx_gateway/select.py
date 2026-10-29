@@ -35,7 +35,7 @@ class DmxStartupBehaviorSelect(CoordinatorEntity[GatewayCoordinator], SelectEnti
         self._channel_id = channel_id
         self._device_id = device_id
         self._attr_unique_id = f"{coordinator.info.gateway_id}_{channel_id}_startup_behavior"
-        self._attr_name = f"{channel_name} — после повторного включения"
+        self._attr_name = f"{channel_name} — действие после подачи электропитания"
 
     @property
     def device_info(self) -> DeviceInfo:

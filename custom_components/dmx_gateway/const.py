@@ -19,6 +19,9 @@ DEFAULT_FADE_DURATION: Final = 10.0
 DEFAULT_FADE_RATE: Final = 10.0
 DEFAULT_FADE_ENABLED: Final = True
 
+def fade_enabled_key(channel_id: str) -> str:
+    return f"default_fade_enabled_{channel_id}"
+
 API_VERSION: Final = "v1"
 CONFIG_REFRESH_INTERVAL: Final = 60
 DIAGNOSTICS_REFRESH_INTERVAL: Final = 60
