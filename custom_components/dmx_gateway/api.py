@@ -93,19 +93,20 @@ class DmxGatewayApiClient:
         except GatewayResponseError as err:
             raise GatewayInvalidResponseError(str(err)) from err
 
-    async def async_get_startup_behavior(self) -> str:
+    async def async_get_startup_behavior(self) -> dict[str, str]:
         payload = await self._async_request("GET", "/settings")
         behavior = payload.get("startup_behavior")
-        if behavior not in {"restore", "off"}:
+        if behavior not in {"restore", "off", "on"}:
             raise GatewayInvalidResponseError("invalid startup behavior")
-        return behavior
+        result = {str(item.get("channel")): item.get("startup_behavior") for item in payload.get("channels", []) if isinstance(item, dict)}
+        return result or {"1": behavior, "2": behavior}
 
-    async def async_set_startup_behavior(self, behavior: str) -> str:
-        if behavior not in {"restore", "off"}:
+    async def async_set_startup_behavior(self, behavior: str, channel: int) -> str:
+        if behavior not in {"restore", "off", "on"} or channel < 1:
             raise GatewayUnsupportedOperationError("invalid startup behavior")
-        payload = await self._async_request("PUT", "/settings", {"startup_behavior": behavior})
+        payload = await self._async_request("PUT", "/settings", {"startup_behavior": behavior, "channel": channel})
         returned = payload.get("startup_behavior")
-        if returned not in {"restore", "off"}:
+        if returned not in {"restore", "off", "on"}:
             raise GatewayInvalidResponseError("invalid startup behavior response")
         return returned
 

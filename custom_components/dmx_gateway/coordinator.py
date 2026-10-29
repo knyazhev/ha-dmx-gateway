@@ -24,7 +24,7 @@ class GatewaySnapshot:
     state: GatewayState
     # Product API currently exposes commanded writes, not fixture feedback.
     commanded_brightness: dict[str, float]
-    startup_behavior: str
+    startup_behavior: dict[str, str]
 
 
 class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
@@ -101,10 +101,12 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 replace(self.data, diagnostics=replace(self.data.diagnostics, blackout=returned), state=replace(self.data.state, blackout=returned))
             )
 
-    async def async_set_startup_behavior(self, behavior: str) -> None:
-        returned = await self.client.async_set_startup_behavior(behavior)
+    async def async_set_startup_behavior(self, behavior: str, channel_id: str) -> None:
+        channel = int(channel_id.rsplit("ch", 1)[-1]) if "ch" in channel_id else 1
+        returned = await self.client.async_set_startup_behavior(behavior, channel)
         if self.data:
-            self.async_set_updated_data(replace(self.data, startup_behavior=returned))
+            values = dict(self.data.startup_behavior); values[str(channel)] = returned
+            self.async_set_updated_data(replace(self.data, startup_behavior=values))
 
     @staticmethod
     def _topology(config: GatewayConfig) -> frozenset[tuple[str, str]]:

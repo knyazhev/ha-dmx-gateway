@@ -16,6 +16,10 @@ from .coordinator import GatewayCoordinator
 from .models import Channel, RuntimeDevice
 
 
+def _duration_key(channel_id: str) -> str:
+    return f"default_fade_duration_{channel_id}"
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     """Add one entity for every currently configured brightness channel."""
     coordinator = entry.runtime_data.coordinator
@@ -97,7 +101,7 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
             return max(0, min(600000, round(float(kwargs[ATTR_TRANSITION]) * 1000)))
         if not self.coordinator.entry.options.get(CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_ENABLED):
             return 0
-        duration = float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION)))
+        duration = float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))
         if duration <= 0:
             return 0
         delta = abs(target - self._brightness)

@@ -13,8 +13,18 @@ from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, CONF_D
 from .coordinator import GatewayCoordinator
 
 
+def _duration_key(channel_id: str) -> str:
+    return f"default_fade_duration_{channel_id}"
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
-    async_add_entities([DmxDefaultFadeRateNumber(entry.runtime_data.coordinator)])
+    coordinator = entry.runtime_data.coordinator
+    async_add_entities(
+        DmxDefaultFadeRateNumber(coordinator, device.device_id, channel.channel_id, channel.name)
+        for device in coordinator.data.config.devices
+        for channel in device.channels
+        if channel.type == "brightness"
+    )
 
 
 class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEntity):
@@ -28,28 +38,26 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
     _attr_mode = NumberMode.SLIDER
     _attr_native_unit_of_measurement = "s/10%"
 
-    def __init__(self, coordinator: GatewayCoordinator) -> None:
+    def __init__(self, coordinator: GatewayCoordinator, device_id: str, channel_id: str, channel_name: str) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.info.gateway_id}_default_fade_duration"
+        self._channel_id = channel_id
+        self._device_id = device_id
+        self._attr_unique_id = f"{coordinator.info.gateway_id}_{channel_id}_default_fade_duration"
+        self._attr_name = f"{channel_name} — скорость диммирования"
 
     @property
     def device_info(self) -> DeviceInfo:
         info = self.coordinator.info
-        return DeviceInfo(
-            identifiers={(DOMAIN, info.gateway_id)},
-            name=info.model,
-            manufacturer=MANUFACTURER,
-            model=info.model,
-            sw_version=info.firmware_version,
-        )
+        device = self.coordinator.data.config.device_for_channel(self._channel_id)
+        return DeviceInfo(identifiers={(DOMAIN, f"{info.gateway_id}:device:{self._device_id}")}, via_device=(DOMAIN, info.gateway_id), name=device.name if device else self._device_id, model="DMX runtime device")
 
     @property
     def native_value(self) -> float:
-        return float(self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION)))
+        return float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))
 
     async def async_set_native_value(self, value: float) -> None:
         options = dict(self.coordinator.entry.options)
-        options[CONF_DEFAULT_FADE_DURATION] = float(value)
+        options[_duration_key(self._channel_id)] = float(value)
         options.setdefault(CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_ENABLED)
         self.hass.config_entries.async_update_entry(self.coordinator.entry, options=options)
         self.async_write_ha_state()
