@@ -11,6 +11,9 @@ Local Home Assistant integration for the ESP32 DMX Gateway Product API.
 - Exposes gateway diagnostic sensors.
 - Includes a standard Options Flow: add, edit and delete DMX devices; set the
   first DMX address, channel count and channel names.
+- Includes per-gateway default fade settings: enable/disable automatic fades
+  and choose the rate in percentage points per second. An explicit HA
+  `transition` value overrides this default.
 - Preserves device and channel IDs during edits, so existing entity IDs stay
   stable.
 
