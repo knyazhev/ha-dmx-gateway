@@ -121,6 +121,9 @@ class Diagnostics:
     runtime_channels: int
     active_transitions: int
     blackout: bool
+    free_heap: int | None = None
+    persistence_load_valid: bool | None = None
+    persistence_last_sync_ok: bool | None = None
 
     @classmethod
     def from_api(cls, payload: dict[str, Any]) -> "Diagnostics":
@@ -132,7 +135,22 @@ class Diagnostics:
         blackout = payload.get("blackout")
         if not isinstance(blackout, bool):
             raise GatewayResponseError("invalid blackout")
-        return cls(tx_rate_fps=float(fps), blackout=blackout, **values)
+        free_heap = payload.get("free_heap")
+        if isinstance(free_heap, bool) or (free_heap is not None and not isinstance(free_heap, int)):
+            raise GatewayResponseError("invalid free_heap")
+        persistence = payload.get("persistence")
+        if persistence is not None and not isinstance(persistence, dict):
+            raise GatewayResponseError("invalid persistence")
+        load_valid = persistence.get("load_valid") if persistence else None
+        last_sync_ok = persistence.get("last_sync_ok") if persistence else None
+        if load_valid is not None and not isinstance(load_valid, bool):
+            raise GatewayResponseError("invalid persistence.load_valid")
+        if last_sync_ok is not None and not isinstance(last_sync_ok, bool):
+            raise GatewayResponseError("invalid persistence.last_sync_ok")
+        return cls(
+            tx_rate_fps=float(fps), blackout=blackout, free_heap=free_heap,
+            persistence_load_valid=load_valid, persistence_last_sync_ok=last_sync_ok, **values,
+        )
 
 
 @dataclass(frozen=True, slots=True)

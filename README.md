@@ -8,7 +8,9 @@ Local Home Assistant integration for the ESP32 DMX Gateway Product API.
 - Uses the stable gateway ID, rather than its DHCP address, as the HA identity.
 - Provides dimmable light entities for every configured DMX channel and a
   blackout switch.
-- Exposes gateway diagnostic sensors.
+- Exposes gateway diagnostic sensors on the gateway device page: uptime,
+  free memory, DMX frame rate, transmission errors, runtime topology,
+  transition count, and NVS persistence health.
 - Includes a standard Options Flow: add, edit and delete DMX devices; set the
   first DMX address, channel count and channel names.
 - Includes per-channel default fade settings: enable/disable automatic fades
