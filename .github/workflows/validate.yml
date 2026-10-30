@@ -1,0 +1,31 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  package-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate manifests, translations, and Python syntax
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          root = Path('custom_components/dmx_gateway')
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          assert manifest['domain'] == 'dmx_gateway'
+          assert manifest['config_flow'] is True
+          for item in [root / 'strings.json', *(root / 'translations').glob('*.json')]:
+              json.loads(item.read_text(encoding='utf-8'))
+          for item in root.glob('*.py'):
+              ast.parse(item.read_text(encoding='utf-8'), filename=str(item))
+          print('HACS package contract is valid')
+          PY
