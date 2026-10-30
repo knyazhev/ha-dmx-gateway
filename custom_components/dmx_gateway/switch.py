@@ -9,13 +9,21 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DmxGatewayConfigEntry
-from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_ENABLED, DEFAULT_FADE_RATE, DOMAIN, MANUFACTURER, fade_enabled_key
+from .const import CONF_DEFAULT_FADE_DURATION, CONF_DEFAULT_FADE_ENABLED, DEFAULT_FADE_DURATION, DEFAULT_FADE_ENABLED, DOMAIN, MANUFACTURER, fade_enabled_key
 from .coordinator import GatewayCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     coordinator = entry.runtime_data.coordinator
-    async_add_entities([DmxBlackoutSwitch(coordinator)])
+    async_add_entities(
+        [DmxBlackoutSwitch(coordinator)]
+        + [
+            DmxDefaultFadeSwitch(coordinator, device.device_id, channel.channel_id, channel.name)
+            for device in coordinator.data.config.devices
+            for channel in device.channels
+            if channel.type == "brightness"
+        ]
+    )
 
 
 class DmxBlackoutSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
@@ -82,6 +90,6 @@ class DmxDefaultFadeSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
     async def _set(self, value: bool) -> None:
         options = dict(self.coordinator.entry.options)
         options[fade_enabled_key(self._channel_id)] = value
-        options.setdefault(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_RATE)
+        options.setdefault(CONF_DEFAULT_FADE_DURATION, DEFAULT_FADE_DURATION)
         self.hass.config_entries.async_update_entry(self.coordinator.entry, options=options)
         self.async_write_ha_state()
