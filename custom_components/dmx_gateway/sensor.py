@@ -1,7 +1,7 @@
 """ESPHome-style read-only gateway diagnostics."""
 from __future__ import annotations
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
-from homeassistant.const import PERCENTAGE, UnitOfTime
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -22,7 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, a
     ])
 
 class DmxDiagnosticSensor(CoordinatorEntity[GatewayCoordinator], SensorEntity):
-    _attr_entity_category = "diagnostic"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_has_entity_name = True
     def __init__(self, coordinator: GatewayCoordinator, key: str, name: str, unit: str | None, device_class: SensorDeviceClass | None) -> None:
         super().__init__(coordinator); self._key=key; self._attr_name=name; self._attr_unique_id=f"{coordinator.info.gateway_id}_{key}"; self._attr_native_unit_of_measurement=unit; self._attr_device_class=device_class
