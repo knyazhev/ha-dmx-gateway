@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
     try:
         info = await client.async_get_info()
     except GatewayAuthenticationError as err:
-        raise ConfigEntryAuthFailed("development credential rejected") from err
+        raise ConfigEntryAuthFailed("gateway connection code rejected") from err
     except GatewayApiCompatibilityError as err:
         raise ConfigEntryNotReady(f"unsupported Product API: {err}") from err
     except GatewayConnectionError as err:
@@ -57,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
     try:
         await coordinator.async_config_entry_first_refresh()
     except GatewayAuthenticationError as err:
-        raise ConfigEntryAuthFailed("development credential rejected") from err
+        raise ConfigEntryAuthFailed("gateway connection code rejected") from err
     except GatewayConnectionError as err:
         raise ConfigEntryNotReady("gateway is unavailable") from err
 

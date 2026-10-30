@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, a
 
 
 class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEntity):
-    """Default automatic fade speed in percentage points per second."""
+    """Default duration of a full 0–100 percent automatic fade."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "default_fade_duration"
@@ -36,7 +36,7 @@ class DmxDefaultFadeRateNumber(CoordinatorEntity[GatewayCoordinator], NumberEnti
     _attr_native_max_value = 10
     _attr_native_step = 1
     _attr_mode = NumberMode.SLIDER
-    _attr_native_unit_of_measurement = "s/10%"
+    _attr_native_unit_of_measurement = "s"
 
     def __init__(self, coordinator: GatewayCoordinator, device_id: str, channel_id: str, channel_name: str) -> None:
         super().__init__(coordinator)

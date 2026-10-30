@@ -178,7 +178,7 @@ class DmxGatewayOptionsFlow(OptionsFlowWithReload):
         return self.async_show_menu(step_id="init", menu_options=menu_options)
 
     async def async_step_fade_settings(self, user_input: dict[str, Any] | None = None):
-        """Configure the default fade rate used when HA omits transition."""
+        """Configure full-range fade time used when HA omits transition."""
         if user_input is not None:
             return self.async_create_entry(data={CONF_DEFAULT_FADE_ENABLED: bool(user_input[CONF_DEFAULT_FADE_ENABLED]), CONF_DEFAULT_FADE_DURATION: float(user_input[CONF_DEFAULT_FADE_DURATION])})
         current = self.config_entry.options.get(CONF_DEFAULT_FADE_DURATION, self.config_entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))

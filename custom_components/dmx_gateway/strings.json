@@ -4,26 +4,26 @@
     "step": {
       "user": {
         "title": "Connect to DMX Gateway",
-        "description": "Enter the local Product API address and API token.",
-        "data": {"host": "Host or IP address", "port": "Port", "token": "API token"}
+        "description": "Enter the local Product API address and the connection code shown during first-run setup.",
+        "data": {"host": "Host or IP address", "port": "Port", "token": "Connection code"}
       },
       "reconfigure": {
         "title": "Reconfigure DMX Gateway",
-        "data": {"host": "Host or IP address", "port": "Port", "token": "API token"}
+        "data": {"host": "Host or IP address", "port": "Port", "token": "Connection code"}
       },
       "reauth_confirm": {
         "title": "Reauthenticate DMX Gateway",
-        "description": "The gateway rejected the saved API token.",
-        "data": {"token": "API token"}
+        "description": "The gateway rejected the saved connection code.",
+        "data": {"token": "Connection code"}
       }
     },
-    "error": {"cannot_connect": "Cannot connect to gateway", "timeout": "Gateway timed out", "invalid_auth": "Invalid API token", "unsupported_api": "Unsupported gateway API version"},
+    "error": {"cannot_connect": "Cannot connect to gateway", "timeout": "Gateway timed out", "invalid_auth": "Invalid connection code", "unsupported_api": "Unsupported gateway API version"},
     "abort": {"already_configured": "This gateway is already configured", "reauth_successful": "Reauthentication successful", "reconfigure_successful": "Reconfiguration successful"}
   },
   "options": {
     "step": {
       "init": {"menu_options": {"fade_settings": "Fade settings", "add_device": "Add device", "edit_device": "Edit device", "delete_device": "Delete device"}},
-      "fade_settings": {"title": "Default fade", "description": "Used when a light command does not include an explicit transition.", "data": {"default_fade_enabled": "Enable default fade", "default_fade_duration": "Dimming time per 10% (seconds)"}},
+      "fade_settings": {"title": "Default fade", "description": "Used when a light command does not include an explicit transition.", "data": {"default_fade_enabled": "Enable default fade", "default_fade_duration": "Time from 0 to 100% (seconds)"}},
       "add_device": {"title": "Add brightness device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
       "edit_device": {"title": "Select device", "data": {"device_id": "Device"}},
       "edit_device_details": {"title": "Edit device", "data": {"name": "Device name", "start_address": "First DMX slot", "channel_count": "Brightness channels"}},
@@ -34,5 +34,5 @@
     "error": {"cannot_connect": "Cannot connect to gateway", "invalid_config": "Gateway rejected this configuration", "revision_conflict": "Configuration changed on the gateway. Reopen the editor and try again.", "required": "A name is required", "dmx_range": "The start address and channel count must fit within DMX slots 1–512."},
     "abort": {"cannot_connect": "Cannot connect to gateway", "delete_cancelled": "Deletion cancelled"}
   },
-  "entity": {"switch": {"blackout": {"name": "Blackout"}, "default_fade": {"name": "Default fade"}}, "number": {"default_fade_duration": {"name": "Dimming time per 10%"}}, "select": {"startup_behavior": {"name": "After restart", "state": {"on": "All channels on", "off": "All channels off", "restore": "Restore last state"}}}}
+  "entity": {"switch": {"blackout": {"name": "Blackout"}, "default_fade": {"name": "Default fade"}}, "number": {"default_fade_duration": {"name": "Time from 0 to 100%"}}, "select": {"startup_behavior": {"name": "After restart", "state": {"on": "All channels on", "off": "All channels off", "restore": "Restore last state"}}}}
 }

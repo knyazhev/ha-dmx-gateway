@@ -1,17 +1,17 @@
 {
   "config": {
     "step": {
-      "user": {"title": "Подключение DMX Gateway", "description": "Укажите адрес локального API шлюза и API-токен.", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "API-токен"}},
-      "reconfigure": {"title": "Изменение DMX Gateway", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "API-токен"}},
-      "reauth_confirm": {"title": "Повторная аутентификация DMX Gateway", "data": {"token": "API-токен"}}
+      "user": {"title": "Подключение DMX Gateway", "description": "Укажите адрес локального API шлюза и код подключения, показанный при первом запуске.", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Код подключения"}},
+      "reconfigure": {"title": "Изменение DMX Gateway", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Код подключения"}},
+      "reauth_confirm": {"title": "Повторная аутентификация DMX Gateway", "data": {"token": "Код подключения"}}
     },
-    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "timeout": "Превышено время ожидания", "invalid_auth": "Неверный API-токен", "unsupported_api": "Неподдерживаемая версия API"},
+    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "timeout": "Превышено время ожидания", "invalid_auth": "Неверный код подключения", "unsupported_api": "Неподдерживаемая версия API"},
     "abort": {"already_configured": "Этот шлюз уже настроен", "reauth_successful": "Аутентификация успешна", "reconfigure_successful": "Перенастройка успешна"}
   },
   "options": {
     "step": {
       "init": {"menu_options": {"fade_settings": "Настройка плавности", "add_device": "Добавить устройство", "edit_device": "Изменить устройство", "delete_device": "Удалить устройство"}},
-      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_enabled": "Включить плавность по умолчанию", "default_fade_duration": "Время диммирования на 10% (секунды)"}},
+      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_enabled": "Включать плавно", "default_fade_duration": "Время увеличения яркости с 0 до 100 % (секунды)"}},
       "add_device": {"title": "Добавление DMX-устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
       "edit_device": {"title": "Выбор устройства", "data": {"device_id": "Устройство"}},
       "edit_device_details": {"title": "Изменение устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},

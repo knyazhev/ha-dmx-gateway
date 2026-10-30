@@ -95,12 +95,12 @@ class DmxBrightnessLight(CoordinatorEntity[GatewayCoordinator], LightEntity):
 
     def _transition_ms(self, kwargs: dict[str, Any], target: float) -> int:
         # An explicit HA transition always wins, including transition=0 to
-        # request an immediate change. Otherwise use the per-entry default
-        # duration is the time for each 10 percentage-point change.
+        # request an immediate change. Otherwise use the per-channel default:
+        # its duration is for a complete 0–100 percent change.
         if ATTR_TRANSITION in kwargs:
             return max(0, min(600000, round(float(kwargs[ATTR_TRANSITION]) * 1000)))
         duration = float(self.coordinator.entry.options.get(_duration_key(self._channel_id), self.coordinator.entry.options.get(CONF_DEFAULT_FADE_DURATION, self.coordinator.entry.options.get(CONF_DEFAULT_FADE_RATE, DEFAULT_FADE_DURATION))))
         if duration <= 0:
             return 0
         delta = abs(target - self._brightness)
-        return max(0, min(600000, round(delta * duration * 10.0 * 1000.0)))
+        return max(0, min(600000, round(delta * duration * 1000.0)))
