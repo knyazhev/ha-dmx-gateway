@@ -35,7 +35,9 @@ class DmxDiagnosticSensor(CoordinatorEntity[GatewayCoordinator], SensorEntity):
             return None
         value = getattr(self.coordinator.data.diagnostics, self._key)
         if self._key.startswith("persistence_") and value is not None:
-            return "OK" if value else "Ошибка"
+            if self._key == "persistence_load_valid":
+                return "OK" if value else "Нет валидного состояния"
+            return "OK" if value else "Ошибка записи"
         return value
     @property
     def device_info(self) -> DeviceInfo:
