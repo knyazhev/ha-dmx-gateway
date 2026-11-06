@@ -17,7 +17,7 @@ from .api import DmxGatewayApiClient, GatewayApiCompatibilityError, GatewayAuthe
 from .const import CONFIG_REFRESH_INTERVAL, CONF_HOST, CONF_PORT, CONF_TOKEN, DOMAIN, MANUFACTURER
 from .coordinator import GatewayCoordinator
 
-PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH]
 
 
 @dataclass(slots=True)
@@ -57,6 +57,14 @@ def _remove_legacy_child_devices(hass: HomeAssistant, entry: DmxGatewayConfigEnt
             entities.async_remove(entity.entity_id)
     for device_id in legacy_ids:
         devices.async_remove_device(device_id)
+
+
+def _remove_gateway_diagnostic_entities(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -> None:
+    """Keep diagnostics on the gateway instead of filling HA Activity."""
+    entities = er.async_get(hass)
+    for entity in tuple(entities.entities.values()):
+        if entity.config_entry_id == entry.entry_id and entity.platform == DOMAIN and entity.domain == "sensor":
+            entities.async_remove(entity.entity_id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -> bool:
@@ -101,6 +109,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
         sw_version=info.firmware_version,
     )
     _remove_legacy_child_devices(hass, entry, info.gateway_id)
+    _remove_gateway_diagnostic_entities(hass, entry)
     await coordinator.async_reconcile_registry()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

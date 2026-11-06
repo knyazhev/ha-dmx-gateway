@@ -78,7 +78,7 @@ async def main():
             check("four logical channels", len(coordinator.data.config.channels)==4)
             check("existing entity_id preserved", registry.async_get_entity_id("light","dmx_gateway","test-gateway_ch1")==original.entity_id)
             check("custom name preserved", registry.async_get(original.entity_id).name=="Owner custom name")
-            check("diagnostic registry retained", registry.async_get(sensor.entity_id) is not None)
+            check("gateway diagnostics removed from HA registry", registry.async_get(sensor.entity_id) is None)
             check("deleted channel retained disabled", registry.async_get(removed.entity_id).disabled_by==er.RegistryEntryDisabler.INTEGRATION)
             check("user disable retained", registry.async_get(user_disabled.entity_id).disabled_by==er.RegistryEntryDisabler.USER)
             gateway=devices.async_get_device_by_identifier(("dmx_gateway",info.gateway_id),entry.entry_id)

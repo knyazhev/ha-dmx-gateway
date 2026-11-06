@@ -57,6 +57,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
         self.info = info
         self._reload_scheduled = False
         self._io_lock = asyncio.Lock()
+        self._pending_channel_targets: dict[str, float] = {}
 
     @serialized_io
     async def _async_update_data(self) -> GatewaySnapshot:
@@ -91,6 +92,12 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
         # Gateway /state is authoritative across HA restart/reconnect. If a
         # topology update raced the two GETs, retain only channels from config.
         commanded = {channel_id: logical.brightness for channel_id, logical in state.channels.items() if channel_id in valid_channels}
+        for channel_id, target in tuple(self._pending_channel_targets.items()):
+            actual = state.channels.get(channel_id)
+            if actual is None or not actual.transitioning:
+                self._pending_channel_targets.pop(channel_id, None)
+            else:
+                commanded[channel_id] = target
         diagnostics = replace(diagnostics, blackout=state.blackout)
         snapshot = GatewaySnapshot(info=info, config=config, diagnostics=diagnostics, state=state, commanded_brightness=commanded, startup_behavior=startup_behavior)
         if old and self._topology(old.config) != self._topology(config):
@@ -99,16 +106,13 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
 
     @serialized_io
     async def async_set_channel(self, channel_id: str, brightness: float, transition_ms: int, use_default_fade: bool = False) -> None:
-        """Send one gateway-side command; do not emulate a transition in HA."""
+        """Let the gateway's measured transition drive the HA entity state."""
         await self.client.async_set_channel_state(channel_id, brightness, transition_ms, use_default_fade)
+        self._pending_channel_targets[channel_id] = brightness
         if self.data:
-            states = dict(self.data.commanded_brightness)
-            states[channel_id] = brightness
-            state_channels = dict(self.data.state.channels)
-            state_channels[channel_id] = LogicalChannelState(brightness=brightness, transitioning=transition_ms > 0)
-            self.async_set_updated_data(
-                replace(self.data, state=replace(self.data.state, channels=state_channels), commanded_brightness=states)
-            )
+            commanded = dict(self.data.commanded_brightness)
+            commanded[channel_id] = brightness
+            self.async_set_updated_data(replace(self.data, commanded_brightness=commanded))
 
     @serialized_io
     async def async_set_blackout(self, state: bool) -> None:
@@ -159,6 +163,12 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 full_refresh = True
             else:
                 commanded = {key: value.brightness for key, value in state.channels.items()}
+                for channel_id, target in tuple(self._pending_channel_targets.items()):
+                    actual = state.channels.get(channel_id)
+                    if actual is None or not actual.transitioning:
+                        self._pending_channel_targets.pop(channel_id, None)
+                    else:
+                        commanded[channel_id] = target
                 self.async_set_updated_data(replace(self.data,state=state,commanded_brightness=commanded,diagnostics=replace(self.data.diagnostics,blackout=state.blackout)))
         if full_refresh:
             await self.async_request_refresh()

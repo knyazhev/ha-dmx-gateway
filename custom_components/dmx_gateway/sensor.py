@@ -12,14 +12,9 @@ from .coordinator import GatewayCoordinator
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     async_add_entities(DmxDiagnosticSensor(entry.runtime_data.coordinator, key, name, unit, device_class) for key, name, unit, device_class in [
-        ("uptime_s", "Время работы", None, None),
-        ("tx_rate_fps", "Частота DMX", "fps", None),
         ("tx_errors", "Ошибки передачи DMX", None, None),
-        ("config_revision", "Версия конфигурации", None, None),
         ("runtime_devices", "Исполнительные устройства", None, None),
         ("runtime_channels", "Каналы DMX", None, None),
-        ("active_transitions", "Активные переходы", None, None),
-        ("free_heap", "Свободная память", "MB", SensorDeviceClass.DATA_SIZE),
         ("persistence_load_valid", "Состояние после загрузки", None, None),
         ("persistence_last_sync_ok", "Последняя запись состояния", None, None),
     ])
