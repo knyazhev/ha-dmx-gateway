@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -17,7 +17,7 @@ from .api import DmxGatewayApiClient, GatewayApiCompatibilityError, GatewayAuthe
 from .const import CONFIG_REFRESH_INTERVAL, CONF_HOST, CONF_PORT, CONF_TOKEN, DOMAIN, MANUFACTURER
 from .coordinator import GatewayCoordinator
 
-PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH, Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.SWITCH, Platform.SENSOR]
 
 
 @dataclass(slots=True)
@@ -29,6 +29,34 @@ class GatewayRuntime:
 
 
 DmxGatewayConfigEntry = ConfigEntry[GatewayRuntime]
+
+
+def _remove_legacy_child_devices(hass: HomeAssistant, entry: DmxGatewayConfigEntry, gateway_id: str) -> None:
+    """Remove obsolete physical-device children created by the old HA model."""
+    devices = dr.async_get(hass)
+    if hasattr(devices, "async_get_device_by_identifier"):
+        gateway = devices.async_get_device_by_identifier((DOMAIN, gateway_id), entry.entry_id)
+    else:  # Older Home Assistant compatibility.
+        gateway = devices.async_get_device({(DOMAIN, gateway_id)})
+    if gateway is None:
+        return
+    legacy_names = {"SkyDance S1-DR", "sss1"}
+    legacy_ids = {
+        device.id
+        for device in devices.devices.values()
+        if device.config_entries == {entry.entry_id}
+        and device.via_device_id == gateway.id
+        and device.model == "DMX runtime device"
+        and device.name in legacy_names
+    }
+    if not legacy_ids:
+        return
+    entities = er.async_get(hass)
+    for entity in tuple(entities.entities.values()):
+        if entity.config_entry_id == entry.entry_id and entity.platform == DOMAIN and entity.device_id in legacy_ids:
+            entities.async_remove(entity.entity_id)
+    for device_id in legacy_ids:
+        devices.async_remove_device(device_id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -> bool:
@@ -62,16 +90,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
         raise ConfigEntryNotReady("gateway is unavailable") from err
 
     entry.runtime_data = GatewayRuntime(client=client, coordinator=coordinator)
-    await coordinator.async_reconcile_registry()
     registry = dr.async_get(hass)
     registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, info.gateway_id)},
-        name=info.model,
+        name="BELARD DMX Gateway",
+        configuration_url="https://192.168.4.1/#channels",
         manufacturer=MANUFACTURER,
         model=info.model,
         sw_version=info.firmware_version,
     )
+    _remove_legacy_child_devices(hass, entry, info.gateway_id)
+    await coordinator.async_reconcile_registry()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def async_authoritative_refresh(_now) -> None:
@@ -81,6 +111,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
     entry.async_on_unload(
         async_track_time_interval(hass, async_authoritative_refresh, timedelta(seconds=CONFIG_REFRESH_INTERVAL))
     )
+    async def async_state_refresh(_now) -> None:
+        await coordinator.async_refresh_state()
+
+    entry.async_on_unload(async_track_time_interval(hass, async_state_refresh, timedelta(seconds=5)))
     return True
 
 

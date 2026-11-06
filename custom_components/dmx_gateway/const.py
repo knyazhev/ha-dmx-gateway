@@ -10,7 +10,7 @@ PLATFORMS: Final = ["light", "switch"]
 CONF_HOST: Final = "host"
 CONF_PORT: Final = "port"
 CONF_TOKEN: Final = "token"
-DEFAULT_PORT: Final = 8080
+DEFAULT_PORT: Final = 443
 CONF_DEFAULT_FADE_DURATION: Final = "default_fade_duration"
 # Backward-compatible alias for existing options entries.
 CONF_DEFAULT_FADE_RATE: Final = "default_fade_rate"

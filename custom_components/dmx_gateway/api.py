@@ -52,13 +52,29 @@ class DmxGatewayApiClient:
 
     def __init__(self, session: Any, host: str, port: int, token: str) -> None:
         self._session = session
-        self._base_url = f"http://{host}:{port}/v1"
+        self._set_transport(host, port)
         self._token = token
 
     def update_connection(self, host: str, port: int, token: str) -> None:
         """Update entry connection data without changing gateway identity."""
-        self._base_url = f"http://{host}:{port}/v1"
+        self._set_transport(host, port)
         self._token = token
+
+    def _set_transport(self, host: str, port: int) -> None:
+        from urllib.parse import urlsplit
+        from aiohttp import Fingerprint
+        parsed = urlsplit(host if "://" in host else f"http://{host}")
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
+            raise ValueError("invalid gateway address")
+        self._tls_pin = None
+        if parsed.fragment:
+            if parsed.scheme != "https" or not parsed.fragment.startswith("sha256="):
+                raise ValueError("invalid TLS fingerprint")
+            pin = bytes.fromhex(parsed.fragment[7:])
+            if len(pin) != 32:
+                raise ValueError("TLS fingerprint must contain 32 bytes")
+            self._tls_pin = Fingerprint(pin)
+        self._base_url = f"{parsed.scheme}://{parsed.hostname}:{port}/v1"
 
     async def async_get_info(self) -> GatewayInfo:
         payload = await self._async_request("GET", "/info")
@@ -75,10 +91,21 @@ class DmxGatewayApiClient:
     async def async_put_config(self, config: dict[str, Any], expected_revision: int) -> GatewayConfig:
         return self._parse_config(await self._async_request("PUT", "/config", {"expected_revision": expected_revision, "config": config}))
 
-    async def async_set_channel_state(self, channel_id: str, brightness: float, transition_ms: int = 0) -> None:
+    async def async_set_channel_state(self, channel_id: str, brightness: float, transition_ms: int = 0, use_default_fade: bool = False) -> None:
         if not 0.0 <= brightness <= 1.0 or not 0 <= transition_ms <= 600000:
             raise GatewayUnsupportedOperationError("brightness or transition_ms outside Product API range")
-        await self._async_request("POST", f"/channels/{quote(channel_id, safe='')}/state", {"brightness": brightness, "transition_ms": transition_ms})
+        payload = {"brightness": brightness, "transition_ms": transition_ms}
+        if use_default_fade:
+            payload["use_default_fade"] = True
+        await self._async_request("POST", f"/channels/{quote(channel_id, safe='')}/state", payload)
+
+    async def async_set_group_state(self, group_id: str, values: list[int], transition_ms: int = 0, use_default_fade: bool = False) -> None:
+        if not values or any(isinstance(value, bool) or not 0 <= value <= 255 for value in values) or not 0 <= transition_ms <= 600000:
+            raise GatewayUnsupportedOperationError("group values or transition_ms outside Product API range")
+        payload = {"values": values, "transition_ms": transition_ms}
+        if use_default_fade:
+            payload["use_default_fade"] = True
+        await self._async_request("POST", f"/groups/{quote(group_id, safe='')}/state", payload)
 
     async def async_set_blackout(self, state: bool) -> bool:
         payload = await self._async_request("POST", "/blackout", {"state": state})
@@ -123,11 +150,14 @@ class DmxGatewayApiClient:
             raise GatewayInvalidResponseError(str(err)) from err
 
     async def _async_request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
-        headers = {"Authorization": f"Bearer {self._token}", "Accept": "application/json"}
+        headers = {"Accept": "application/json"}
+        if self._token:
+            headers["Authorization"] = f"Bearer {self._token}"
         if payload is not None:
             headers["Content-Type"] = "application/json"
         try:
-            async with self._session.request(method, self._base_url + path, headers=headers, json=payload, timeout=REQUEST_TIMEOUT) as response:
+            tls = {"ssl": self._tls_pin} if self._tls_pin is not None else {}
+            async with self._session.request(method, self._base_url + path, headers=headers, json=payload, timeout=REQUEST_TIMEOUT, **tls) as response:
                 # Authentication is determined by the HTTP status. Some
                 # intermediaries return a non-JSON 401 page, so classify it
                 # before attempting to decode a structured API response.
@@ -145,7 +175,7 @@ class DmxGatewayApiClient:
             raise GatewayInvalidResponseError("gateway JSON root is not an object")
         if response.status == 409 and body.get("error") == "revision_conflict":
             raise GatewayRevisionConflictError("gateway configuration changed")
-        if response.status in (404, 422) and body.get("error") in {"unsupported_operation", "unknown_channel"}:
+        if response.status in (404, 422) and body.get("error") in {"unsupported_operation", "unknown_channel", "unknown_group"}:
             raise GatewayUnsupportedOperationError(str(body.get("message", body["error"])))
         if response.status < 200 or response.status >= 300:
             raise GatewayApiError(f"gateway returned HTTP {response.status}: {body.get('error', 'unknown_error')}")

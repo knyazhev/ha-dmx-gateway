@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from functools import wraps
 from dataclasses import dataclass, replace
 from typing import Final
 
@@ -27,6 +29,15 @@ class GatewaySnapshot:
     startup_behavior: dict[str, str]
 
 
+def serialized_io(method):
+    """A late poll must finish before a new command can update the HA cache."""
+    @wraps(method)
+    async def wrapped(self,*args,**kwargs):
+        async with self._io_lock:
+            return await method(self,*args,**kwargs)
+    return wrapped
+
+
 class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
     """Refresh topology/diagnostics slowly; commands update logical state now."""
 
@@ -45,7 +56,9 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
         self.client = client
         self.info = info
         self._reload_scheduled = False
+        self._io_lock = asyncio.Lock()
 
+    @serialized_io
     async def _async_update_data(self) -> GatewaySnapshot:
         try:
             # The product API runs on a deliberately small ESP-IDF HTTP
@@ -64,27 +77,30 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 if state.config_revision != config.config_revision:
                     state = await self.client.async_get_state()
             diagnostics = await self.client.async_get_diagnostics()
-            startup_behavior = await self.client.async_get_startup_behavior()
+            # Startup behavior and fade defaults are configured in the
+            # gateway Web UI in the gateway-centric model. They are not
+            # required for entity hydration and are absent from native v1.
+            startup_behavior = {}
         except GatewayAuthenticationError:
             raise
         except GatewayApiError as err:
             raise UpdateFailed(str(err)) from err
 
         old = self.data
-        valid_channels = {channel.channel_id for device in config.devices for channel in device.channels}
+        valid_channels = {channel.channel_id for channel in config.channels}
         # Gateway /state is authoritative across HA restart/reconnect. If a
         # topology update raced the two GETs, retain only channels from config.
         commanded = {channel_id: logical.brightness for channel_id, logical in state.channels.items() if channel_id in valid_channels}
         diagnostics = replace(diagnostics, blackout=state.blackout)
         snapshot = GatewaySnapshot(info=info, config=config, diagnostics=diagnostics, state=state, commanded_brightness=commanded, startup_behavior=startup_behavior)
-        self._sync_runtime_device_names(config)
         if old and self._topology(old.config) != self._topology(config):
             self._schedule_reload(old.config, config)
         return snapshot
 
-    async def async_set_channel(self, channel_id: str, brightness: float, transition_ms: int) -> None:
+    @serialized_io
+    async def async_set_channel(self, channel_id: str, brightness: float, transition_ms: int, use_default_fade: bool = False) -> None:
         """Send one gateway-side command; do not emulate a transition in HA."""
-        await self.client.async_set_channel_state(channel_id, brightness, transition_ms)
+        await self.client.async_set_channel_state(channel_id, brightness, transition_ms, use_default_fade)
         if self.data:
             states = dict(self.data.commanded_brightness)
             states[channel_id] = brightness
@@ -94,6 +110,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 replace(self.data, state=replace(self.data.state, channels=state_channels), commanded_brightness=states)
             )
 
+    @serialized_io
     async def async_set_blackout(self, state: bool) -> None:
         returned = await self.client.async_set_blackout(state)
         if self.data:
@@ -101,6 +118,25 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 replace(self.data, diagnostics=replace(self.data.diagnostics, blackout=returned), state=replace(self.data.state, blackout=returned))
             )
 
+    @serialized_io
+    async def async_set_group(self, group_id: str, values: list[int], transition_ms: int, use_default_fade: bool = False) -> None:
+        await self.client.async_set_group_state(group_id, values, transition_ms, use_default_fade)
+        if self.data:
+            groups = dict(self.data.state.groups)
+            groups[group_id] = tuple(values)
+            channels = dict(self.data.state.channels)
+            commanded = dict(self.data.commanded_brightness)
+            group = next((item for item in self.data.config.groups if item.group_id == group_id), None)
+            if group is not None:
+                for channel_id, value in zip(group.members, values, strict=True):
+                    channels[channel_id] = LogicalChannelState(value / 255, transition_ms > 0)
+                    commanded[channel_id] = value / 255
+            self.async_set_updated_data(replace(
+                self.data, state=replace(self.data.state, groups=groups, channels=channels),
+                commanded_brightness=commanded,
+            ))
+
+    @serialized_io
     async def async_set_startup_behavior(self, behavior: str, channel_id: str) -> None:
         channel = int(channel_id.rsplit("ch", 1)[-1]) if "ch" in channel_id else 1
         returned = await self.client.async_set_startup_behavior(behavior, channel)
@@ -108,74 +144,73 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
             values = dict(self.data.startup_behavior); values[str(channel)] = returned
             self.async_set_updated_data(replace(self.data, startup_behavior=values))
 
-    @staticmethod
-    def _topology(config: GatewayConfig) -> frozenset[tuple[str, str]]:
-        return frozenset((device.device_id, channel.channel_id) for device in config.devices for channel in device.channels)
+    async def async_refresh_state(self) -> None:
+        """Read actual levels quickly; never send cached values to the gateway."""
+        full_refresh = False
+        async with self._io_lock:
+            if self.data is None:
+                return
+            try:
+                state = await self.client.async_get_state()
+            except GatewayApiError as err:
+                self.async_set_update_error(UpdateFailed(str(err)))
+                return
+            if set(state.channels) != set(self.data.state.channels) or set(state.groups) != set(self.data.state.groups):
+                full_refresh = True
+            else:
+                commanded = {key: value.brightness for key, value in state.channels.items()}
+                self.async_set_updated_data(replace(self.data,state=state,commanded_brightness=commanded,diagnostics=replace(self.data.diagnostics,blackout=state.blackout)))
+        if full_refresh:
+            await self.async_request_refresh()
 
-    def _sync_runtime_device_names(self, config: GatewayConfig) -> None:
-        """Reflect Gateway display-name changes without replacing device identity."""
-        device_registry = dr.async_get(self.hass)
-        for runtime_device in config.devices:
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, f"{self.info.gateway_id}:device:{runtime_device.device_id}")}
-            )
-            if device is not None and device.name_by_user is None and device.name != runtime_device.name:
-                device_registry.async_update_device(device.id, name=runtime_device.name)
+    @staticmethod
+    def _topology(config: GatewayConfig) -> frozenset[tuple[str, str, str, str]]:
+        return frozenset(
+            [("channel", channel.channel_id, channel.type, str(channel.published)) for channel in config.channels]
+            + [("group", group.group_id, group.type, str(group.published)) for group in config.groups]
+        )
 
     @callback
     def _schedule_reload(self, previous: GatewayConfig, current: GatewayConfig) -> None:
-        """Remove only vanished runtime identities before a topology reload."""
+        """Reload platforms when published topology changes, retaining registry IDs."""
         if self._reload_scheduled:
             return
         self._reload_scheduled = True
-        previous_channels = {channel.channel_id for device in previous.devices for channel in device.channels}
-        current_channels = {channel.channel_id for device in current.devices for channel in device.channels}
-        removed_channels = previous_channels - current_channels
-        previous_devices = {device.device_id for device in previous.devices}
-        current_devices = {device.device_id for device in current.devices}
-        removed_devices = previous_devices - current_devices
-        self.hass.async_create_task(self._async_reconcile_removed_topology(removed_channels, removed_devices))
-
-    async def _async_reconcile_removed_topology(self, removed_channels: set[str], removed_devices: set[str]) -> None:
-        """Remove stale HA registry records owned by deleted Gateway topology."""
-        entity_registry = er.async_get(self.hass)
-        expected_unique_ids = {f"{self.info.gateway_id}_{channel_id}" for channel_id in removed_channels}
-        for entity in er.async_entries_for_config_entry(entity_registry, self.entry.entry_id):
-            if entity.platform == DOMAIN and entity.unique_id in expected_unique_ids:
-                entity_registry.async_remove(entity.entity_id)
-
-        device_registry = dr.async_get(self.hass)
-        for device_id in removed_devices:
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, f"{self.info.gateway_id}:device:{device_id}")}
-            )
-            if device is not None:
-                device_registry.async_remove_device(device.id)
-
-        await self.hass.config_entries.async_reload(self.entry.entry_id)
+        self.hass.async_create_task(self.hass.config_entries.async_reload(self.entry.entry_id))
 
     async def async_reconcile_registry(self) -> None:
-        """Remove prior runtime entities that no longer exist on the Gateway."""
+        """Move entities to the gateway and retain IDs of hidden/deleted controls.
+
+        Registry removal destroys entity_id/customizations used by automations.
+        Integration-disabled records can instead be reused on ungroup/restore;
+        an owner's explicit disabled_by setting is never overwritten.
+        """
         if self.data is None:
             return
-        active_channel_ids = {
-            channel.channel_id for device in self.data.config.devices for channel in device.channels
+        expected = {
+            ("switch" if channel.type == "Switch" else "light", f"{self.info.gateway_id}_{channel.channel_id}")
+            for channel in self.data.config.published_channels
         }
-        expected_unique_ids = {
-            f"{self.info.gateway_id}_{channel_id}" for channel_id in active_channel_ids
-        }
-        entity_registry = er.async_get(self.hass)
-        stale_device_ids: set[str] = set()
-        for entity in er.async_entries_for_config_entry(entity_registry, self.entry.entry_id):
-            if (
-                entity.platform == DOMAIN
-                and entity.unique_id != f"{self.info.gateway_id}_blackout"
-                and entity.unique_id not in expected_unique_ids
-            ):
-                if entity.device_id is not None:
-                    stale_device_ids.add(entity.device_id)
-                entity_registry.async_remove(entity.entity_id)
-
-        device_registry = dr.async_get(self.hass)
-        for device_id in stale_device_ids:
-            device_registry.async_remove_device(device_id)
+        expected.update(("light", f"{self.info.gateway_id}_{group.group_id}")
+                        for group in self.data.config.groups if group.published)
+        expected.add(("switch", f"{self.info.gateway_id}_blackout"))
+        registry = er.async_get(self.hass)
+        devices = dr.async_get(self.hass)
+        if hasattr(devices, "async_get_device_by_identifier"):
+            gateway = devices.async_get_device_by_identifier((DOMAIN, self.info.gateway_id), self.entry.entry_id)
+        else:  # Supported older Home Assistant releases.
+            gateway = devices.async_get_device(identifiers={(DOMAIN, self.info.gateway_id)})
+        for entity in er.async_entries_for_config_entry(registry, self.entry.entry_id):
+            if entity.platform != DOMAIN:
+                continue
+            changes = {}
+            if gateway is not None and entity.device_id != gateway.id:
+                changes["device_id"] = gateway.id
+            # Diagnostics remain registered independently of control topology.
+            active = entity.domain == "sensor" or (entity.domain, entity.unique_id) in expected
+            if not active and entity.disabled_by is None:
+                changes["disabled_by"] = er.RegistryEntryDisabler.INTEGRATION
+            elif active and entity.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                changes["disabled_by"] = None
+            if changes:
+                registry.async_update_entity(entity.entity_id, **changes)

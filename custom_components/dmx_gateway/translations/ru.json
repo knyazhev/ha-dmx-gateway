@@ -1,26 +1,126 @@
 {
   "config": {
     "step": {
-      "user": {"title": "Подключение DMX Gateway", "description": "Укажите адрес локального API шлюза и код подключения, показанный при первом запуске.", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Код подключения"}},
-      "reconfigure": {"title": "Изменение DMX Gateway", "data": {"host": "Хост или IP-адрес", "port": "Порт", "token": "Код подключения"}},
-      "reauth_confirm": {"title": "Повторная аутентификация DMX Gateway", "data": {"token": "Код подключения"}}
+      "user": {
+        "title": "Подключение DMX Gateway",
+        "description": "Создайте токен в веб-интерфейсе шлюза: Интеграции → Home Assistant. Для native ESP-IDF используйте HTTPS, порт 443 и отпечаток сертификата из персонализации.",
+        "data": {
+          "host": "Хост или IP-адрес",
+          "port": "Порт",
+          "token": "Токен Home Assistant"
+        }
+      },
+      "reconfigure": {
+        "title": "Изменение DMX Gateway",
+        "data": {
+          "host": "Хост или IP-адрес",
+          "port": "Порт",
+          "token": "Токен Home Assistant"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Повторная аутентификация DMX Gateway",
+        "data": {
+          "token": "Токен Home Assistant"
+        }
+      }
     },
-    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "timeout": "Превышено время ожидания", "invalid_auth": "Неверный код подключения", "unsupported_api": "Неподдерживаемая версия API"},
-    "abort": {"already_configured": "Этот шлюз уже настроен", "reauth_successful": "Аутентификация успешна", "reconfigure_successful": "Перенастройка успешна"}
+    "error": {
+      "cannot_connect": "Не удалось подключиться к шлюзу",
+      "timeout": "Превышено время ожидания",
+      "invalid_auth": "Неверный токен Home Assistant",
+      "unsupported_api": "Неподдерживаемая версия API"
+    },
+    "abort": {
+      "already_configured": "Этот шлюз уже настроен",
+      "reauth_successful": "Аутентификация успешна",
+      "reconfigure_successful": "Перенастройка успешна"
+    }
   },
   "options": {
     "step": {
-      "init": {"menu_options": {"fade_settings": "Настройка плавности", "add_device": "Добавить устройство", "edit_device": "Изменить устройство", "delete_device": "Удалить устройство"}},
-      "fade_settings": {"title": "Плавность по умолчанию", "description": "Используется, если команда света не содержит явный transition.", "data": {"default_fade_enabled": "Включать плавно", "default_fade_duration": "Время увеличения яркости с 0 до 100 % (секунды)"}},
-      "add_device": {"title": "Добавление DMX-устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
-      "edit_device": {"title": "Выбор устройства", "data": {"device_id": "Устройство"}},
-      "edit_device_details": {"title": "Изменение устройства", "data": {"name": "Имя устройства", "start_address": "Первый адрес DMX", "channel_count": "Количество каналов яркости"}},
-      "edit_channels": {"title": "Имена каналов"},
-      "delete_device": {"title": "Выбор устройства для удаления", "data": {"device_id": "Устройство"}},
-      "confirm_delete": {"title": "Подтверждение удаления", "data": {"confirm": "Удалить это устройство"}}
+      "init": {
+        "menu_options": {
+          "gateway_settings": "Добавить или изменить каналы"
+        }
+      },
+      "add_device": {
+        "title": "Добавление DMX-устройства",
+        "data": {
+          "name": "Имя устройства",
+          "start_address": "Первый адрес DMX",
+          "channel_count": "Количество каналов яркости"
+        }
+      },
+      "edit_device": {
+        "title": "Выбор устройства",
+        "data": {
+          "device_id": "Устройство"
+        }
+      },
+      "edit_device_details": {
+        "title": "Изменение устройства",
+        "data": {
+          "name": "Имя устройства",
+          "start_address": "Первый адрес DMX",
+          "channel_count": "Количество каналов яркости"
+        }
+      },
+      "edit_channels": {
+        "title": "Имена каналов"
+      },
+      "delete_device": {
+        "title": "Выбор устройства для удаления",
+        "data": {
+          "device_id": "Устройство"
+        }
+      },
+      "confirm_delete": {
+        "title": "Подтверждение удаления",
+        "data": {
+          "confirm": "Удалить это устройство"
+        }
+      },
+      "gateway_settings": {
+        "title": "Каналы на шлюзе",
+        "description": "Каналы создаются и изменяются в веб-интерфейсе шлюза. Home Assistant получает их автоматически, без перезапуска.\n\n[Открыть раздел «Каналы»]({gateway_url})\n\nДля этого адреса компьютер или телефон должен быть подключён к Wi-Fi точке шлюза. RGB/RGBW-группа публикуется как одна сущность; после разъединения исходные каналы снова появляются отдельно."
+      }
     },
-    "error": {"cannot_connect": "Не удалось подключиться к шлюзу", "invalid_config": "Шлюз отклонил конфигурацию", "revision_conflict": "Конфигурация изменилась. Откройте редактор заново.", "required": "Требуется имя", "dmx_range": "Начальный адрес и число каналов должны помещаться в диапазон DMX 1–512."},
-    "abort": {"cannot_connect": "Не удалось подключиться к шлюзу", "delete_cancelled": "Удаление отменено"}
+    "error": {
+      "cannot_connect": "Не удалось подключиться к шлюзу",
+      "invalid_config": "Шлюз отклонил конфигурацию",
+      "revision_conflict": "Конфигурация изменилась. Откройте редактор заново.",
+      "required": "Требуется имя",
+      "dmx_range": "Начальный адрес и число каналов должны помещаться в диапазон DMX 1–512."
+    },
+    "abort": {
+      "cannot_connect": "Не удалось подключиться к шлюзу",
+      "delete_cancelled": "Удаление отменено"
+    }
   },
-  "entity": {"switch": {"blackout": {"name": "Затемнение"}, "default_fade": {"name": "Включать плавно"}}, "number": {"default_fade_duration": {"name": "Время увеличения яркости с 0 до 100 %"}}, "select": {"startup_behavior": {"name": "Действие после подачи электропитания", "state": {"on": "Включен", "off": "Выключен", "restore": "Состояние при отключении"}}}}
+  "entity": {
+    "switch": {
+      "blackout": {
+        "name": "Затемнение"
+      },
+      "default_fade": {
+        "name": "Включать плавно"
+      }
+    },
+    "number": {
+      "default_fade_duration": {
+        "name": "Время увеличения яркости с 0 до 100 %"
+      }
+    },
+    "select": {
+      "startup_behavior": {
+        "name": "Действие после подачи электропитания",
+        "state": {
+          "on": "Включен",
+          "off": "Выключен",
+          "restore": "Состояние при отключении"
+        }
+      }
+    }
+  }
 }

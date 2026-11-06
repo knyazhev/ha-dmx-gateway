@@ -5,7 +5,6 @@ from __future__ import annotations
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -16,21 +15,7 @@ from .coordinator import GatewayCoordinator
 
 async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     coordinator = entry.runtime_data.coordinator
-    # Older releases exposed a per-channel default-fade switch.  The switch
-    # duplicated the light entity in the device card and did not represent a
-    # separate gateway capability (the duration number is the authoritative
-    # per-channel setting). Remove only those stale registry entries while
-    # retaining the global blackout switch.
-    registry = er.async_get(hass)
-    for device in coordinator.data.config.devices:
-        for channel in device.channels:
-            if channel.type != "brightness":
-                continue
-            stale_uid = f"{coordinator.info.gateway_id}_{channel.channel_id}_default_fade"
-            entity_id = registry.async_get_entity_id("switch", DOMAIN, stale_uid)
-            if entity_id:
-                registry.async_remove(entity_id)
-    async_add_entities([DmxBlackoutSwitch(coordinator)])
+    async_add_entities([DmxBlackoutSwitch(coordinator), *(DmxLogicalSwitch(coordinator, channel.channel_id) for channel in coordinator.data.config.published_channels if channel.type == "Switch")])
 
 
 class DmxBlackoutSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
@@ -48,7 +33,7 @@ class DmxBlackoutSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
         info = self.coordinator.info
         return DeviceInfo(
             identifiers={(DOMAIN, info.gateway_id)},
-            name=info.model,
+            name="BELARD DMX Gateway",
             manufacturer=MANUFACTURER,
             model=info.model,
             sw_version=info.firmware_version,
@@ -63,3 +48,34 @@ class DmxBlackoutSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
 
     async def async_turn_off(self, **kwargs) -> None:
         await self.coordinator.async_set_blackout(False)
+
+
+class DmxLogicalSwitch(CoordinatorEntity[GatewayCoordinator], SwitchEntity):
+    """A published logical channel declared as a Home Assistant switch."""
+
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator: GatewayCoordinator, channel_id: str) -> None:
+        super().__init__(coordinator)
+        self._channel_id = channel_id
+        self._attr_unique_id = f"{coordinator.info.gateway_id}_{channel_id}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        info = self.coordinator.info
+        return DeviceInfo(identifiers={(DOMAIN, info.gateway_id)}, name="BELARD DMX Gateway", manufacturer=MANUFACTURER, model=info.model, sw_version=info.firmware_version)
+
+    @property
+    def name(self) -> str:
+        channel = self.coordinator.data.config.channel_for_id(self._channel_id) if self.coordinator.data else None
+        return channel.name if channel else self._channel_id
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self.coordinator.data and not self.coordinator.data.state.blackout and self.coordinator.data.commanded_brightness.get(self._channel_id, 0.0) > 0)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.async_set_channel(self._channel_id, 1.0, 0)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.async_set_channel(self._channel_id, 0.0, 0)
