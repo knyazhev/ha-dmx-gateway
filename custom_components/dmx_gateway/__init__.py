@@ -123,7 +123,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DmxGatewayConfigEntry) -
     async def async_state_refresh(_now) -> None:
         await coordinator.async_refresh_state()
 
-    entry.async_on_unload(async_track_time_interval(hass, async_state_refresh, timedelta(seconds=5)))
+    entry.async_on_unload(async_track_time_interval(hass, async_state_refresh, timedelta(milliseconds=500)))
     return True
 
 

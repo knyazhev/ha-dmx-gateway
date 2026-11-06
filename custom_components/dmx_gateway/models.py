@@ -259,6 +259,7 @@ class Diagnostics:
 class LogicalChannelState:
     brightness: float
     transitioning: bool
+    target_authoritative: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,7 +287,7 @@ class GatewayState:
                 raise GatewayResponseError("invalid state brightness")
             if not isinstance(transitioning, bool):
                 raise GatewayResponseError("invalid transitioning")
-            parsed[channel_id] = LogicalChannelState(float(brightness), transitioning)
+            parsed[channel_id] = LogicalChannelState(float(brightness), transitioning, "actual_brightness" in channel)
         parsed_groups: dict[str, tuple[int, ...]] = {}
         for group_id, group in groups.items():
             if not isinstance(group_id, str) or not isinstance(group, dict) or not isinstance(group.get("values", []), list) or not all(isinstance(value, int) and 0 <= value <= 255 for value in group.get("values", [])):

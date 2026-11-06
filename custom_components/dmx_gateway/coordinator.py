@@ -94,7 +94,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
         commanded = {channel_id: logical.brightness for channel_id, logical in state.channels.items() if channel_id in valid_channels}
         for channel_id, target in tuple(self._pending_channel_targets.items()):
             actual = state.channels.get(channel_id)
-            if actual is None or not actual.transitioning:
+            if actual is None or actual.target_authoritative or not actual.transitioning:
                 self._pending_channel_targets.pop(channel_id, None)
             else:
                 commanded[channel_id] = target
@@ -150,6 +150,10 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
 
     async def async_refresh_state(self) -> None:
         """Read actual levels quickly; never send cached values to the gateway."""
+        # Skip busy ticks rather than queueing reads behind a slow request or
+        # a command. This also bounds work while the gateway reconnects.
+        if self._io_lock.locked():
+            return
         full_refresh = False
         async with self._io_lock:
             if self.data is None:
@@ -165,7 +169,7 @@ class GatewayCoordinator(DataUpdateCoordinator[GatewaySnapshot]):
                 commanded = {key: value.brightness for key, value in state.channels.items()}
                 for channel_id, target in tuple(self._pending_channel_targets.items()):
                     actual = state.channels.get(channel_id)
-                    if actual is None or not actual.transitioning:
+                    if actual is None or actual.target_authoritative or not actual.transitioning:
                         self._pending_channel_targets.pop(channel_id, None)
                     else:
                         commanded[channel_id] = target
