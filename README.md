@@ -2,16 +2,16 @@
 
 Local integration for the existing native ESP-IDF 5.5.5 gateway. Home Assistant is an optional client; the gateway works independently.
 
-## Configure / Настройка
+## Configure / РќР°СЃС‚СЂРѕР№РєР°
 
 1. Configure Wi-Fi and channels in the gateway Web UI. On its personalized WPA2 AP, open `https://192.168.4.1/` using the owner-verified certificate/CA. Sign in with the administrator password.
-2. Under **Integrations → Home Assistant**, create a scoped integration token. The administrator password is not the HA token.
+2. Under **Integrations в†’ Home Assistant**, create a scoped integration token. The administrator password is not the HA token.
 3. In HA, add or reconfigure **DMX Gateway**. For native firmware use `https://<LAN-IP>#sha256=<owner-verified-certificate-fingerprint>`, port `443`, and the integration token. The fingerprint is public; never put the token in a URL.
 4. Existing legacy HTTP addresses remain supported when explicitly configured with their old scheme and port.
 
-Каналы добавляются в веб-интерфейсе шлюза: **Каналы → имя, DMX-адрес, тип → Добавить канал**. В меню настройки интеграции есть переход к этому разделу. В колонке **Home Assistant** на шлюзе можно включить или отключить публикацию отдельного канала, сохранив DMX-канал и его уровень. Текущее состояние и уровни опрашиваются каждые 5 секунд; топология и диагностика — каждые 60 секунд.
+РљР°РЅР°Р»С‹ РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РІ РІРµР±-РёРЅС‚РµСЂС„РµР№СЃРµ С€Р»СЋР·Р°: **РљР°РЅР°Р»С‹ в†’ РёРјСЏ, DMX-Р°РґСЂРµСЃ, С‚РёРї в†’ Р”РѕР±Р°РІРёС‚СЊ РєР°РЅР°Р»**. Р’ РјРµРЅСЋ РЅР°СЃС‚СЂРѕР№РєРё РёРЅС‚РµРіСЂР°С†РёРё РµСЃС‚СЊ РїРµСЂРµС…РѕРґ Рє СЌС‚РѕРјСѓ СЂР°Р·РґРµР»Сѓ. Р’ РєРѕР»РѕРЅРєРµ **Home Assistant** РЅР° С€Р»СЋР·Рµ РјРѕР¶РЅРѕ РІРєР»СЋС‡РёС‚СЊ РёР»Рё РѕС‚РєР»СЋС‡РёС‚СЊ РїСѓР±Р»РёРєР°С†РёСЋ РѕС‚РґРµР»СЊРЅРѕРіРѕ РєР°РЅР°Р»Р°, СЃРѕС…СЂР°РЅРёРІ DMX-РєР°РЅР°Р» Рё РµРіРѕ СѓСЂРѕРІРµРЅСЊ. РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ Рё СѓСЂРѕРІРЅРё РѕРїСЂР°С€РёРІР°СЋС‚СЃСЏ РєР°Р¶РґС‹Рµ 5 СЃРµРєСѓРЅРґ; С‚РѕРїРѕР»РѕРіРёСЏ Рё РґРёР°РіРЅРѕСЃС‚РёРєР° вЂ” РєР°Р¶РґС‹Рµ 60 СЃРµРєСѓРЅРґ.
 
-HA и Алиса управляют одним шлюзом независимыми путями. Команда Алисы меняет шлюз через Cloud/MQTT; HA получает состояние следующим read-only опросом. Команда HA управляет шлюзом локально, а тот публикует новое состояние в Cloud/MQTT. При ошибке чтения HA не отправляет старый кэш обратно; после восстановления соединения интеграция перечитывает состояние с устройства. Перед изменением яркости RGB/RGBW-группы HA сначала читает актуальный цвет, чтобы не восстановить устаревшие цветовые компоненты.
+HA Рё РђР»РёСЃР° СѓРїСЂР°РІР»СЏСЋС‚ РѕРґРЅРёРј С€Р»СЋР·РѕРј РЅРµР·Р°РІРёСЃРёРјС‹РјРё РїСѓС‚СЏРјРё. РљРѕРјР°РЅРґР° РђР»РёСЃС‹ РјРµРЅСЏРµС‚ С€Р»СЋР· С‡РµСЂРµР· Cloud/MQTT; HA РїРѕР»СѓС‡Р°РµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ СЃР»РµРґСѓСЋС‰РёРј read-only РѕРїСЂРѕСЃРѕРј. РљРѕРјР°РЅРґР° HA СѓРїСЂР°РІР»СЏРµС‚ С€Р»СЋР·РѕРј Р»РѕРєР°Р»СЊРЅРѕ, Р° С‚РѕС‚ РїСѓР±Р»РёРєСѓРµС‚ РЅРѕРІРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РІ Cloud/MQTT. РџСЂРё РѕС€РёР±РєРµ С‡С‚РµРЅРёСЏ HA РЅРµ РѕС‚РїСЂР°РІР»СЏРµС‚ СЃС‚Р°СЂС‹Р№ РєСЌС€ РѕР±СЂР°С‚РЅРѕ; РїРѕСЃР»Рµ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ СЃРѕРµРґРёРЅРµРЅРёСЏ РёРЅС‚РµРіСЂР°С†РёСЏ РїРµСЂРµС‡РёС‚С‹РІР°РµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ СЃ СѓСЃС‚СЂРѕР№СЃС‚РІР°. РџРµСЂРµРґ РёР·РјРµРЅРµРЅРёРµРј СЏСЂРєРѕСЃС‚Рё RGB/RGBW-РіСЂСѓРїРїС‹ HA СЃРЅР°С‡Р°Р»Р° С‡РёС‚Р°РµС‚ Р°РєС‚СѓР°Р»СЊРЅС‹Р№ С†РІРµС‚, С‡С‚РѕР±С‹ РЅРµ РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ СѓСЃС‚Р°СЂРµРІС€РёРµ С†РІРµС‚РѕРІС‹Рµ РєРѕРјРїРѕРЅРµРЅС‚С‹.
 
 ## Entities
 
@@ -27,6 +27,10 @@ Diagnostics use gateway readings. A save that has not yet been attempted is unkn
 
 ## Tests
 
-`tests/run_core_tests.py` runs against the official Home Assistant Core 2026.10.4 image with isolated configuration and an in-process gateway fixture. It checks entity registry preservation, topology changes, RGB/RGBW control, delayed-poll ordering, read-failure/reconnect recovery, ambiguous command-response recovery, blackout, reconfiguration, token redaction, human-readable uptime, memory units and the HTTPS default port. The fixture is not a physical gateway test. On 2026-11-05 live checks also exercised both physical channels in both HA↔gateway↔Cloud directions, blackout, HA Core restart/reconnect, interruption of a six-second HA fade by a Cloud command, and repeated refreshes without stale replay. Those runs restored the original DMX levels. Separate native-project tests exercise verified TLS and the native C++ runtime/auth code.
+`tests/run_core_tests.py` runs against the official Home Assistant Core 2026.10.4 image with isolated configuration and an in-process gateway fixture. It checks entity registry preservation, topology changes, RGB/RGBW control, delayed-poll ordering, read-failure/reconnect recovery, ambiguous command-response recovery, blackout, reconfiguration, token redaction, human-readable uptime, memory units and the HTTPS default port. The fixture is not a physical gateway test. On 2026-11-05 live checks also exercised both physical channels in both HAв†”gatewayв†”Cloud directions, blackout, HA Core restart/reconnect, interruption of a six-second HA fade by a Cloud command, and repeated refreshes without stale replay. Those runs restored the original DMX levels. Separate native-project tests exercise verified TLS and the native C++ runtime/auth code.
 
 No credentials, personalized identity images or firmware binaries belong in this repository.
+
+## Verified stability — 2026-11-07
+
+With native firmware `0.1.0-net.20261107.3`, a one-hour physical gateway run recorded 119 samples, no MQTT reconnects, no TLS/HTTP timeouts, no reboot and no DMX transmission error. Free heap recovered after temporary allocations; no sustained leak was observed during this hour. This does not certify electrical BREAK/MAB timing or power-loss OTA rollback. Cloud-origin state propagation was separately measured at 1.41–1.84 seconds including cloud request time. HA remains an independent local client.
